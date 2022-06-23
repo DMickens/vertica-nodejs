@@ -50,3 +50,18 @@ suite.test('vertica protocol_version connection parameter', function () {
   })
 })
 
+  // if there is no meta function for determining the connection property server-side then we will need
+  // to establish multiple connections which cannot be in parallel. One connection can insert/update data
+  // if autocommit is on, the second connection will be able to see the changes, if it is off they won't
+  
+suite.test('vertica autocommit connection parameter - true', function () {
+  // if true is default, assert current expected behavior for defaults to be true
+
+  //
+  var client = new vertica.Client({autocommit: false})
+  client.connect()
+  client.query("") //IS THERE A META FUNCTION FOR AUTOCOMMIT OR A SESSION TABLE PROPERTY ??
+  // IF SO, CHANGE THIS TEST TO BE FOR BOTH TRUE AND FALSE AND ESTABLISH TWO CONNECTIONS
+  
+}
+

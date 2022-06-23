@@ -13,4 +13,5 @@ export interface ConnectionOptions {
   fallback_application_name?: string
   options?: string
   client_label?: string
+  autocommit?:boolean
 }

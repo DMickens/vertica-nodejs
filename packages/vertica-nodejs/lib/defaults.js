@@ -74,6 +74,9 @@ module.exports = {
   // A string to identify the vertica-nodejs connection's session on the server
   client_label: '',
 
+  // A boolean declaring whether autocommit will be on or off on the server
+  autocommit: false, // I can't remember if this is on or off by default in the other drivers. Off in vsql
+
   // A comma separated string listing all backup nodes to connect to. Each node is a host-port pair separated by a colon.
   backup_server_node: '',
 }

@@ -38,6 +38,7 @@ class Client extends EventEmitter {
     this.replication = this.connectionParameters.replication
 
     this.client_label = this.connectionParameters.client_label;
+    this.autocommit = this.connectionParameters.autocommit;
     this.protocol_version = this.connectionParameters.protocol_version;
 
     var c = config || {}
@@ -61,6 +62,7 @@ class Client extends EventEmitter {
         keepAliveInitialDelayMillis: c.keepAliveInitialDelayMillis || 0,
         encoding: this.connectionParameters.client_encoding || 'utf8',
         client_label: this.connectionParameters.client_label,
+        autocommit: this.connectionParameters.autocommit,
       })
     this.queryQueue = []
     this.binary = c.binary || defaults.binary
@@ -528,6 +530,11 @@ class Client extends EventEmitter {
 
     if (params.client_label) {
       data.client_label = params.client_label
+    }
+
+    // is autocommit set during startup?
+    if (params.autocommit) {
+      data.autocommit = params.autocommit
     }
 
     return data
