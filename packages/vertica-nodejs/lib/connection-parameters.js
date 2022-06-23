@@ -30,14 +30,21 @@ var add = function (params, config, paramName) {
   }
 }
 
-var parseBackupServerNodes = function (str) {
-  return str.split(',')
-    .filter(entry => entry.length > 0)
-    .map(entry => entry.split(':'))
-    .filter(pair => pair[0].length > 0)
-    .map(pair => pair[1] ?
-      { host: pair[0], port: parseInt(pair[1]) } :
-      { host: pair[0], port: defaults.port })
+var parseBackupServerNodes = function (nodes) {
+  // We need to check the type of the input because the ConnectionParameters
+  // constructor will try to assign config = config, which will
+  // cause an error if we try to parse an already parsed value.
+  if (typeof nodes == 'string') {
+    return nodes.split(',')
+      .filter(entry => entry.length > 0)
+      .map(entry => entry.split(':'))
+      .filter(pair => pair[0].length > 0)
+      .map(pair => pair[1] ?
+        { host: pair[0], port: parseInt(pair[1]) } :
+        { host: pair[0], port: defaults.port })
+  } else {
+    return nodes
+  }
 }
 
 class ConnectionParameters {
@@ -90,9 +97,8 @@ class ConnectionParameters {
 
     this.backup_server_node = parseBackupServerNodes(val('backup_server_node', config))
     this.client_label = val('client_label', config, false)
-    // NOTE: implementation occured for protocol 3.0, moving to 3.11 is breaking things, for the time 
-    // being we are staying with and enforcing 3.0
-    this.protocol_version = (3 << 16 | 0) // 3.0 -> (major << 16 | minor) -> (3 << 16 | 0) -> 196608
+    //NOTE: The client has only been tested to support 3.5, which was chosen in order to include SHA512 support
+    this.protocol_version = (3 << 16 | 5) // 3.5 -> (major << 16 | minor) -> (3 << 16 | 5) -> 196613
 
     if (config.connectionTimeoutMillis === undefined) {
       this.connect_timeout = process.env.PGCONNECT_TIMEOUT || 0

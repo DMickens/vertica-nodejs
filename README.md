@@ -2,7 +2,9 @@
 
 <!-- NPM package when published -->
 <!-- NPM downloads when published -->
-[![License](https://img.shields.io/github/license/vertica/vertica-nodejs)](https://opensource.org/licenses/MIT) <!-- UPDATE TO APACHE 2.0 LICENSE-->
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+
 
 *vertica-nodejs* is a native Javascript client for the Vertica (http://www.vertica.com) database. 
 
@@ -61,4 +63,8 @@ The causes and solutions to common errors can be found among the [Frequently Ask
 
 ## License
 
+<<<<<<< HEAD
 See [License](https;//github.com/vertica/vertica-nodejs/LICENSE)
+=======
+Apache 2.0 License, please see [LICENSE](LICENSE) for details.
+>>>>>>> ca9a0a3772009f4032db34a898531f97e6ebc55e

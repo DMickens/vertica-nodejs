@@ -13,6 +13,7 @@ export type MessageName =
   | 'rowDescription'
   | 'parameterDescription'
   | 'parameterStatus'
+  | 'commandDescription'
   | 'backendKeyData'
   | 'notification'
   | 'readyForQuery'
@@ -22,10 +23,8 @@ export type MessageName =
   | 'copyOutResponse'
   | 'authenticationOk'
   | 'authenticationMD5Password'
+  | 'authenticationSHA512Password'
   | 'authenticationCleartextPassword'
-  | 'authenticationSASL'
-  | 'authenticationSASLContinue'
-  | 'authenticationSASLFinal'
   | 'error'
   | 'notice'
 
@@ -136,7 +135,7 @@ export class CopyResponse {
 export class Field {
   constructor(
     public readonly name: string,
-    public readonly tableID: number,
+    public readonly tableID: bigint,
     public readonly columnID: number,
     public readonly dataTypeID: number,
     public readonly dataTypeSize: number,
@@ -147,17 +146,28 @@ export class Field {
 
 export class RowDescriptionMessage {
   public readonly name: MessageName = 'rowDescription'
+  //public readonly nonNativeTypes: number; // leaving as breadcrumb for where to begin implementation of non native types
   public readonly fields: Field[]
   constructor(public readonly length: number, public readonly fieldCount: number) {
     this.fields = new Array(this.fieldCount)
   }
 }
 
+export class Parameter {
+  constructor (
+    public readonly isNonNative: boolean,
+    public readonly oid: number, // for non native types, the oid becomes the index into the type mapping pool
+    public readonly typemod: number,
+    public readonly hasNotNullConstraint: number
+  ) {}
+}
+
 export class ParameterDescriptionMessage {
   public readonly name: MessageName = 'parameterDescription'
-  public readonly dataTypeIDs: number[]
+  //public readonly nonNativeTyeps: number // leaving as breadcrumb for where to begin implementation of non native types
+  public readonly parameters: Parameter[]
   constructor(public readonly length: number, public readonly parameterCount: number) {
-    this.dataTypeIDs = new Array(this.parameterCount)
+    this.parameters = new Array(this.parameterCount)
   }
 }
 
@@ -170,9 +180,20 @@ export class ParameterStatusMessage {
   ) {}
 }
 
+export class CommandDescriptionMessage {
+  public readonly name: MessageName = 'commandDescription'
+  constructor ( public readonly length: number, public readonly tag: string, 
+                public readonly convertedToCopy: number, public readonly convertedStatement: string) {}
+}
+
 export class AuthenticationMD5Password implements BackendMessage {
   public readonly name: MessageName = 'authenticationMD5Password'
   constructor(public readonly length: number, public readonly salt: Buffer) {}
+}
+
+export class AuthenticationSHA512Password implements BackendMessage {
+  public readonly name: MessageName = 'authenticationSHA512Password'
+  constructor(public readonly length: number, public readonly salt: Buffer, public readonly userSalt: Buffer) {}
 }
 
 export class BackendKeyDataMessage {

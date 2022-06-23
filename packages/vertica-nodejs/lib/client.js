@@ -4,7 +4,6 @@ var dns = require('dns')
 var EventEmitter = require('events').EventEmitter
 var util = require('util')
 var utils = require('./utils')
-var sasl = require('./sasl')
 var pgPass = require('pgpass')
 var TypeOverrides = require('./type-overrides')
 
@@ -99,57 +98,43 @@ class Client extends EventEmitter {
   }
 
   _resolveHost(node) {
-    var ipv4addrs = new this._Promise((resolve, reject) => {
-      dns.resolve4(node.host, (err4, ipv4addrs) =>  {
-        if (err4) {
-          reject(err4)
+    return new this._Promise((resolve, reject) => {
+      dns.lookup(node.host, { all: true }, (err, addresses) => {
+        if (err) {
+          reject(err)
           return
         }
-        resolve(ipv4addrs)
+
+        var resolvedAddresses = addresses
+          .filter((addr) => addr.family === 4 || addr.family === 6)
+          .map((addr) => addr.address)
+
+        this._shuffleAddresses(addresses)
+        resolve(resolvedAddresses.map((addr) => { return { host: addr, port: node.port } }))
       })
-    })
-
-    var ipv6addrs = new this._Promise((resolve, reject) => dns.resolve6(node.host, (err6, ipv6addrs) => {
-      if (err6) {
-        reject(err6)
-        return
-      }
-      resolve(ipv6addrs)
-    }))
-
-    return this._Promise.allSettled([ipv4addrs, ipv6addrs]).then((results) => {
-      // Combine all IP addresses into a single array
-      // If no DNS records are found, return an empty array
-      var resolved_addresses = results
-        .filter((result) => result.status == 'fulfilled')
-        .flatMap((result) => result.value)
-
-      // Note: This is a biased shuffle. We could use Fisher-Yates Shuffle to avoid bias
-      resolved_addresses.sort((a, b) => 0.5 - Math.random())
-      return resolved_addresses.map((addr) => { return { host: addr, port: node.port } })
     })
   }
 
   // Round robin connections iterate through each node in host + backup_server_nodes
   // For each node, resolve the host to a list of addresses, shuffle the addresses, then try each address
-  _roundRobinConnect(nodes, addresses, error) {
+  async _roundRobinConnect(nodes, addresses, error) {
     if (addresses.length > 0) {
       // There are resolved addresses we haven't tried yet, so try the next address
-      this._connectToNextAddress(nodes, addresses)
+      await this._connectToNextAddress(nodes, addresses)
     } else if (nodes.length > 0) {
       // There are no more resolved addresses for the current node, so resolve the host for the next node
       var node = nodes.shift()
-      this._resolveHost(node)
-        .then(((shuffled_addresses) => {
+      await this._resolveHost(node)
+        .then((async (shuffled_addresses) => {
           if (shuffled_addresses.length > 0) {
-            this._connectToNextAddress(nodes, shuffled_addresses)
+            await this._connectToNextAddress(nodes, shuffled_addresses)
           } else {
             var err = new Error("Could not resolve host " + node.host)
-            this._roundRobinConnect(nodes, addresses, err)
+            await this._roundRobinConnect(nodes, addresses, err)
           }
         }).bind(this))
-        .catch(((err) => {
-          this._roundRobinConnect(nodes, addresses, err)
+        .catch((async (err) => {
+          await this._roundRobinConnect(nodes, addresses, err)
         }).bind(this))
     } else {
       if (!error) {
@@ -169,7 +154,7 @@ class Client extends EventEmitter {
     }
   }
 
-  _connectToNextAddress(nodes, addresses) {
+  async _connectToNextAddress(nodes, addresses) {
     var self = this
     var con = this.connection
     this.connectionTimeoutHandle
@@ -204,7 +189,7 @@ class Client extends EventEmitter {
 
     this._attachListeners(con)
 
-    con.once('end', () => {
+    con.once('end', async () => {
       const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
 
       clearTimeout(this.connectionTimeoutHandle)
@@ -215,7 +200,7 @@ class Client extends EventEmitter {
         // on this client then we have an unexpected disconnection
         // treat this as an error unless we've already emitted an error
         // during connection.
-        this._roundRobinConnect(nodes, addresses, error)
+        await this._roundRobinConnect(nodes, addresses, error)
       }
 
       process.nextTick(() => {
@@ -224,7 +209,7 @@ class Client extends EventEmitter {
     })
   }
 
-  _connect(callback) {
+  async _connect(callback) {
     this._connectionCallback = callback
 
     if (this._connecting || this._connected) {
@@ -238,15 +223,13 @@ class Client extends EventEmitter {
     var nodes = this.backup_server_node
     // Add host and port to start of queue of nodes to try connecting to
     nodes.unshift({ host: this.host, port: this.port })
-    this._roundRobinConnect(nodes, [], undefined)
+    await this._roundRobinConnect(nodes, [], undefined)
   }
 
-  connect(callback) {
+  async connect(callback) {
     if (callback) {
-      this._connect(callback)
-      return
+      return this._connect(callback)
     }
-
     return new this._Promise((resolve, reject) => {
       this._connect((error) => {
         if (error) {
@@ -263,10 +246,7 @@ class Client extends EventEmitter {
     con.on('authenticationCleartextPassword', this._handleAuthCleartextPassword.bind(this))
     // password request handling
     con.on('authenticationMD5Password', this._handleAuthMD5Password.bind(this))
-    // password request handling (SASL)
-    con.on('authenticationSASL', this._handleAuthSASL.bind(this))
-    con.on('authenticationSASLContinue', this._handleAuthSASLContinue.bind(this))
-    con.on('authenticationSASLFinal', this._handleAuthSASLFinal.bind(this))
+    con.on('authenticationSHA512Password', this._handleAuthSHA512Password.bind(this))
     con.on('backendKeyData', this._handleBackendKeyData.bind(this))
     con.on('error', this._handleErrorEvent.bind(this))
     con.on('errorMessage', this._handleErrorMessage.bind(this))
@@ -282,7 +262,8 @@ class Client extends EventEmitter {
     con.on('copyData', this._handleCopyData.bind(this))
     con.on('notification', this._handleNotification.bind(this))
     con.on('parameterDescription', this._handleParameterDescription.bind(this))
-    con.on('parameterStatus', this._handleParameterStatus.bind(this)) 
+    con.on('parameterStatus', this._handleParameterStatus.bind(this))
+    con.on('bindComplete', this._handleBindComplete.bind(this))
   }
 
   // TODO(bmc): deprecate pgpass "built in" integration since this.password can be a function
@@ -321,8 +302,8 @@ class Client extends EventEmitter {
   }
 
   _handleParameterStatus(msg) {
-    const min_supported_version = (3 << 16 | 0)         // 3.0 - newest protocol breaks functionality
-    const max_supported_version = this.protocol_version // for now we are enforcing 3.0
+    const min_supported_version = (3 << 16 | 5)         // 3.5
+    const max_supported_version = this.protocol_version // for now we are enforcing 3.5
     switch(msg.parameterName) {
       // right now we only care about the protocol_version
       // if we want to have the parameterStatus message update any other connection properties, add them here
@@ -342,6 +323,11 @@ class Client extends EventEmitter {
     }
   }
 
+  _handleBindComplete(msg) {
+    const activeQuery = this.activeQuery
+    activeQuery.handleBindComplete(this.connection)
+  }
+
   _handleAuthCleartextPassword(msg) {
     this._checkPgPass(() => {
       this.connection.password(this.password)
@@ -355,21 +341,11 @@ class Client extends EventEmitter {
     })
   }
 
-  _handleAuthSASL(msg) {
+  _handleAuthSHA512Password(msg) {
     this._checkPgPass(() => {
-      this.saslSession = sasl.startSession(msg.mechanisms)
-      this.connection.sendSASLInitialResponseMessage(this.saslSession.mechanism, this.saslSession.response)
+      const hashedPassword = utils.postgresSha512PasswordHash(this.password, msg.salt, msg.userSalt)
+      this.connection.password(hashedPassword)
     })
-  }
-
-  _handleAuthSASLContinue(msg) {
-    sasl.continueSession(this.saslSession, this.password, msg.data)
-    this.connection.sendSCRAMClientFinalMessage(this.saslSession.response)
-  }
-
-  _handleAuthSASLFinal(msg) {
-    sasl.finalizeSession(this.saslSession, msg.data)
-    this.saslSession = null
   }
 
   _handleBackendKeyData(msg) {
@@ -456,8 +432,7 @@ class Client extends EventEmitter {
 
   _handlePortalSuspended(msg) {
     // [VERTICA specific] PortalSuspended replaced CommandComplete to indicate completion of the source SQL command
-    // Handle portalSuspended the same way commandComplete is handled
-    this.activeQuery.handleCommandComplete(msg, this.connection)
+    this.activeQuery.handlePortalSuspended(msg, this.connection)
   }
 
   _handleParameterDescription(msg) {
