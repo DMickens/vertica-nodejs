@@ -43,13 +43,16 @@ When you open an issue please provide:
 - version of Vertica
 - smallest possible snippet of code to reproduce the problem
 
+## Examples
 
+See the [examples directory](https://github.com/vertica/vertica-nodejs/tree/master/examples) for sample applications showing how to use the vertica-nodejs client driver.
+
+<!-- 
 ## Contributing
 
 Outside contributions to this project are greatly appreciated. Following standard Vertica open source practices, please see [CONTRIBUTING.md](CONTRIBUTING.md)
 
-
-### Setting up for local development
+## Setting up for local development
 
 1. Clone the repo
 2. From your workspace root run `yarn` and then `yarn lerna bootstrap`
@@ -63,8 +66,4 @@ The causes and solutions to common errors can be found among the [Frequently Ask
 
 ## License
 
-<<<<<<< HEAD
-See [License](https;//github.com/vertica/vertica-nodejs/LICENSE)
-=======
 Apache 2.0 License, please see [LICENSE](LICENSE) for details.
->>>>>>> ca9a0a3772009f4032db34a898531f97e6ebc55e

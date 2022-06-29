@@ -1,6 +1,6 @@
 {
   "name": "v-connection-string",
-  "version": "2.5.0",
+  "version": "0.9.0-pre.5",
   "description": "Functions for dealing with a Vertica connection string",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -15,13 +15,15 @@
     "directory": "packages/v-connection-string"
   },
   "keywords": [
-    "pg",
+    "vertica",
     "connection",
     "string",
-    "parse"
+    "parse",
+    "pg",
+    "postgres"
   ],
   "author": "Vertica",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/vertica/vertica-nodejs/issues"
   },

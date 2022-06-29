@@ -1,15 +1,21 @@
 {
   "name": "vertica-nodejs",
-  "version": "8.7.3",
+  "version": "0.9.0-pre.5",
   "description": "Vertica client - pure javascript & libpq with the same API",
   "keywords": [
     "database",
+    "rdbms",
+    "analytics",
+    "vertica",
+    "machine_learning",
+    "data_warehouse",
+    "columnar_dbms",
+    "sql",
     "libpq",
     "pg",
     "postgre",
     "postgres",
-    "postgresql",
-    "rdbms"
+    "postgresql"
   ],
   "homepage": "https://github.com/vertica/vertica-nodejs",
   "repository": {
@@ -22,9 +28,9 @@
   "dependencies": {
     "buffer-writer": "2.0.0",
     "packet-reader": "1.0.0",
-    "v-connection-string": "^2.5.0",
-    "v-pool": "^3.5.1",
-    "v-protocol": "^1.5.0",
+    "v-connection-string": "0.9.0-pre.5",
+    "v-pool": "0.9.0-pre.5",
+    "v-protocol": "0.9.0-pre.5",
     "pg-types": "^2.1.0",
     "pgpass": "1.x"
   },
@@ -49,7 +55,7 @@
     "lib",
     "SPONSORS.md"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">= 8.0.0"
   }
