@@ -39,6 +39,7 @@ class Client extends EventEmitter {
 
     this.client_label = this.connectionParameters.client_label;
     this.autocommit = this.connectionParameters.autocommit;
+    this.read_only = this.connectionParameters.read_only
     this.protocol_version = this.connectionParameters.protocol_version;
 
     var c = config || {}
@@ -63,6 +64,7 @@ class Client extends EventEmitter {
         encoding: this.connectionParameters.client_encoding || 'utf8',
         client_label: this.connectionParameters.client_label,
         autocommit: this.connectionParameters.autocommit,
+        read_only: this.connectionParameters.read_only,
       })
     this.queryQueue = []
     this.binary = c.binary || defaults.binary
@@ -511,30 +513,8 @@ class Client extends EventEmitter {
       protocol_version: params.protocol_version.toString(),
     }
 
-    var appName = params.application_name || params.fallback_application_name
-    if (appName) {
-      data.application_name = appName
-    }
-    if (params.replication) {
-      data.replication = '' + params.replication
-    }
-    if (params.statement_timeout) {
-      data.statement_timeout = String(parseInt(params.statement_timeout, 10))
-    }
-    if (params.idle_in_transaction_session_timeout) {
-      data.idle_in_transaction_session_timeout = String(parseInt(params.idle_in_transaction_session_timeout, 10))
-    }
-    if (params.options) {
-      data.options = params.options
-    }
-
     if (params.client_label) {
       data.client_label = params.client_label
-    }
-
-    // is autocommit set during startup?
-    if (params.autocommit) {
-      data.autocommit = params.autocommit
     }
 
     return data

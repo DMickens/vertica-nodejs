@@ -14,7 +14,7 @@ const endBuffer = serialize.end()
 class Connection extends EventEmitter {
   constructor(config) {
     super()
-    config = config || {}
+    config = config || {} // config is passing args on startup that the server will be ignoring - needs refactored
     this.stream = config.stream || new net.Socket()
     this._keepAlive = config.keepAlive
     this._keepAliveInitialDelayMillis = config.keepAliveInitialDelayMillis
@@ -30,6 +30,10 @@ class Connection extends EventEmitter {
     this.tls_mode = config.tls_mode || 'disable'
     this.tls_key_file = config.tls_key_file
     this.tls_cert_file = config.tls_cert_file
+
+    //client info
+    this.client_type = "Node.js Driver"
+    this.client_version = '0.9.0' // should we get this from package.json somehow?
 
     var self = this
     this.on('newListener', function (eventName) {
