@@ -1,3 +1,17 @@
+// Copyright (c) 2022 Micro Focus or one of its affiliates.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 'use strict'
 
 var dns = require('dns')
@@ -30,14 +44,21 @@ var add = function (params, config, paramName) {
   }
 }
 
-var parseBackupServerNodes = function (str) {
-  return str.split(',')
-    .filter(entry => entry.length > 0)
-    .map(entry => entry.split(':'))
-    .filter(pair => pair[0].length > 0)
-    .map(pair => pair[1] ?
-      { host: pair[0], port: parseInt(pair[1]) } :
-      { host: pair[0], port: defaults.port })
+var parseBackupServerNodes = function (nodes) {
+  // We need to check the type of the input because the ConnectionParameters
+  // constructor will try to assign config = config, which will
+  // cause an error if we try to parse an already parsed value.
+  if (typeof nodes == 'string') {
+    return nodes.split(',')
+      .filter(entry => entry.length > 0)
+      .map(entry => entry.split(':'))
+      .filter(pair => pair[0].length > 0)
+      .map(pair => pair[1] ?
+        { host: pair[0], port: parseInt(pair[1]) } :
+        { host: pair[0], port: defaults.port })
+  } else {
+    return nodes
+  }
 }
 
 class ConnectionParameters {
@@ -74,8 +95,9 @@ class ConnectionParameters {
     this.options = val('options', config)
 
     this.tls_mode = val('tls_mode', config)
-    this.tls_key_file = val('tls_key_file', config)
-    this.tls_cert_file = val('tls_cert_file', config)
+    //this.tls_client_key = val('tls_client_key', config)
+    //this.tls_client_cert = val('tls_client_cert', config)
+    this.tls_trusted_certs = val('tls_trusted_certs', config)
 
     this.client_encoding = val('client_encoding', config)
     this.replication = val('replication', config)
@@ -90,10 +112,8 @@ class ConnectionParameters {
 
     this.backup_server_node = parseBackupServerNodes(val('backup_server_node', config))
     this.client_label = val('client_label', config, false)
-    this.autocommit = val('autocommit', config, false)
-    // NOTE: implementation occured for protocol 3.0, moving to 3.11 is breaking things, for the time 
-    // being we are staying with and enforcing 3.0
-    this.protocol_version = (3 << 16 | 0) // 3.0 -> (major << 16 | minor) -> (3 << 16 | 0) -> 196608
+    //NOTE: The client has only been tested to support 3.5, which was chosen in order to include SHA512 support
+    this.protocol_version = (3 << 16 | 5) // 3.5 -> (major << 16 | minor) -> (3 << 16 | 5) -> 196613
 
     if (config.connectionTimeoutMillis === undefined) {
       this.connect_timeout = process.env.PGCONNECT_TIMEOUT || 0

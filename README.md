@@ -2,7 +2,9 @@
 
 <!-- NPM package when published -->
 <!-- NPM downloads when published -->
-[![License](https://img.shields.io/github/license/vertica/vertica-nodejs)](https://opensource.org/licenses/MIT) <!-- UPDATE TO APACHE 2.0 LICENSE-->
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+
 
 *vertica-nodejs* is a native Javascript client for the Vertica (http://www.vertica.com) database. 
 
@@ -41,13 +43,16 @@ When you open an issue please provide:
 - version of Vertica
 - smallest possible snippet of code to reproduce the problem
 
+## Examples
 
+See the [examples directory](https://github.com/vertica/vertica-nodejs/tree/master/examples) for sample applications showing how to use the vertica-nodejs client driver.
+
+<!-- 
 ## Contributing
 
 Outside contributions to this project are greatly appreciated. Following standard Vertica open source practices, please see [CONTRIBUTING.md](CONTRIBUTING.md)
 
-
-### Setting up for local development
+## Setting up for local development
 
 1. Clone the repo
 2. From your workspace root run `yarn` and then `yarn lerna bootstrap`
@@ -61,4 +66,4 @@ The causes and solutions to common errors can be found among the [Frequently Ask
 
 ## License
 
-See [License](https;//github.com/vertica/vertica-nodejs/LICENSE)
+Apache 2.0 License, please see [LICENSE](LICENSE) for details.

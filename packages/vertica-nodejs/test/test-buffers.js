@@ -1,3 +1,17 @@
+// Copyright (c) 2022 Micro Focus or one of its affiliates.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 'use strict'
 require('./test-helper')
 const BufferList = require('./buffer-list')
@@ -28,18 +42,6 @@ buffers.authenticationPasswordExpired = function () {
     .addInt32(9)
     .add(Buffer.from([1, 2, 3, 4]))
     .join(true, 'R')
-}
-
-buffers.authenticationSASL = function () {
-  return new BufferList().addInt32(10).addCString('SCRAM-SHA-256').addCString('').join(true, 'R')
-}
-
-buffers.authenticationSASLContinue = function () {
-  return new BufferList().addInt32(11).addString('data').join(true, 'R')
-}
-
-buffers.authenticationSASLFinal = function () {
-  return new BufferList().addInt32(12).addString('data').join(true, 'R')
 }
 
 buffers.parameterStatus = function (name, value) {

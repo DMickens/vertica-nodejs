@@ -1,7 +1,25 @@
+// Copyright (c) 2022 Micro Focus or one of its affiliates.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 'use strict'
 
 var url = require('url')
 var fs = require('fs')
+
+//Parse method copied from https://github.com/brianc/node-postgres
+//Original work Copyright (c) 2010-2014 Brian Carlson (brian.m.carlson@gmail.com)
+//Modified work Copyright (c) 2022 Micro Focus or one of its affiliates.
 
 //parses a connection string
 function parse(str) {
@@ -23,6 +41,11 @@ function parse(str) {
     }
   }
 
+  // if the tls mode specified in the connection string is an invalid option, use the default - disable.
+  if (!['require', 'verify-ca', 'verify-full'].includes(config.tls_mode)) {
+    config.tls_mode = 'disable'
+  }
+  
   var auth = (result.auth || ':').split(':')
   config.user = auth[0]
   config.password = auth.splice(1).join(':')
@@ -52,11 +75,6 @@ function parse(str) {
     pathname = pathname.slice(1) || null
   }
   config.database = pathname && decodeURI(pathname)
-
-  // if the tls mode specified in the connection string is an invalid option, use the default - disable.
-  if (!['require', 'verify-ca', 'verify-full'].includes(config.tls_mode)) {
-    config.tls_mode = 'disable'
-  }
 
   return config
 }

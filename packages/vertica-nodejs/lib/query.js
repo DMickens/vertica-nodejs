@@ -1,3 +1,17 @@
+// Copyright (c) 2022 Micro Focus or one of its affiliates.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 'use strict'
 
 const { EventEmitter } = require('events')
@@ -16,7 +30,7 @@ class Query extends EventEmitter {
     this.rows = config.rows
     this.types = config.types
     this.name = config.name
-    this.binary = config.binary
+    this.binary = config.binary || false
     // use unique portal name each time
     this.portal = config.portal || ''
     this.callback = config.callback
@@ -76,6 +90,12 @@ class Query extends EventEmitter {
     this._accumulateRows = this.callback || !this.listeners('row').length
   }
 
+  handleBindComplete(connection) {
+    connection.execute({portal: this.portal,
+                        rows: this.rows})
+    connection.sync()
+  }
+
   handleDataRow(msg) {
     let row
 
@@ -118,6 +138,7 @@ class Query extends EventEmitter {
 
   handleError(err, connection) {
     // need to sync after error during a prepared statement
+    connection.sync()
     if (this._canceledDueToError) {
       err = this._canceledDueToError
       this._canceledDueToError = false
@@ -164,22 +185,7 @@ class Query extends EventEmitter {
   }
 
   handlePortalSuspended(connection) {
-    this._getRows(connection, this.rows)
-  }
-
-  _getRows(connection, rows) {
-    connection.execute({
-      portal: this.portal,
-      rows: rows,
-    })
-    // if we're not reading pages of rows send the sync command
-    // to indicate the pipeline is finished
-    if (!rows) {
-      connection.sync()
-    } else {
-      // otherwise flush the call out to read more rows
-      connection.flush()
-    }
+    //do nothing, vertica doesn't support result-row count limit
   }
 
   // http://developer.postgresql.org/pgdocs/postgres/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY
@@ -214,6 +220,12 @@ class Query extends EventEmitter {
     // because we're mapping user supplied values to
     // postgres wire protocol compatible values it could
     // throw an exception, so try/catch this section
+
+    // parse out the oid from the ParameterDescription message parameters, since that's what we need to bind with
+    var oids = []
+    for (var i = 0; i < msg.parameters.length; i++) {
+      oids.push(msg.parameters[i].oid)
+    }
     try {
       connection.bind({
         portal: this.portal,
@@ -221,14 +233,13 @@ class Query extends EventEmitter {
         values: this.values,
         binary: this.binary,
         valueMapper: utils.prepareValue,
-        dataTypeIDs: msg.dataTypeIDs,
+        dataTypeIDs: oids,
       })
     } catch (err) {
       this.handleError(err, connection)
       return
     }
-
-    this._getRows(connection, this.rows)
+    connection.flush() // flush to force the bind complete in order to continue the sequence
   }
 
   handleCopyInResponse(connection) {

@@ -1,3 +1,17 @@
+// Copyright (c) 2022 Micro Focus or one of its affiliates.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 'use strict'
 const net = require('net')
 const co = require('co')
@@ -7,6 +21,7 @@ const describe = require('mocha').describe
 const it = require('mocha').it
 
 const Pool = require('../')
+const { assert } = require('console')
 
 describe('pool error handling', function () {
   it('Should complete these queries without dying', function (done) {
@@ -216,13 +231,13 @@ describe('pool error handling', function () {
       pool.connect((err) => {
         expect(err).to.be.an(Error)
         if (err.code) {
-          expect(err.code).to.be('ECONNRESET')
+          assert(err.code === 'ECONNRESET' || err.code === 'EPIPE')
         }
       })
       pool.connect((err) => {
         expect(err).to.be.an(Error)
         if (err.code) {
-          expect(err.code).to.be('ECONNRESET')
+          assert(err.code === 'ECONNRESET' || err.code === 'EPIPE')
         }
         closeServer.close(() => {
           pool.end(done)

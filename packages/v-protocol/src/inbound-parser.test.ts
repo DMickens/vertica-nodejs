@@ -1,3 +1,21 @@
+/**
+ * @license
+ * Copyright (c) 2022 Micro Focus or one of its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 import buffers from './testing/test-buffers'
 import BufferList from './testing/buffer-list'
 import { parse } from '.'
@@ -97,8 +115,9 @@ var emptyRowDescriptionBuffer = new BufferList()
 
 var expectedEmptyRowDescriptionMessage = {
   name: 'rowDescription',
-  length: 6,
+  length: 7,
   fieldCount: 0,
+  nonNativeTypeCount: 0,
   fields: [],
 }
 var expectedOneRowMessage = {
@@ -186,9 +205,6 @@ var testForMessage = function (buffer: Buffer, expectedMessage: any) {
 
 var plainPasswordBuffer = buffers.authenticationCleartextPassword()
 var md5PasswordBuffer = buffers.authenticationMD5Password()
-var SASLBuffer = buffers.authenticationSASL()
-var SASLContinueBuffer = buffers.authenticationSASLContinue()
-var SASLFinalBuffer = buffers.authenticationSASLFinal()
 
 var expectedPlainPasswordMessage = {
   name: 'authenticationCleartextPassword',
@@ -197,21 +213,6 @@ var expectedPlainPasswordMessage = {
 var expectedMD5PasswordMessage = {
   name: 'authenticationMD5Password',
   salt: Buffer.from([1, 2, 3, 4]),
-}
-
-var expectedSASLMessage = {
-  name: 'authenticationSASL',
-  mechanisms: ['SCRAM-SHA-256'],
-}
-
-var expectedSASLContinueMessage = {
-  name: 'authenticationSASLContinue',
-  data: 'data',
-}
-
-var expectedSASLFinalMessage = {
-  name: 'authenticationSASLFinal',
-  data: 'data',
 }
 
 var notificationResponseBuffer = buffers.notification(4, 'hi', 'boom')
@@ -237,23 +238,6 @@ describe('PgPacketStream', function () {
   testForMessage(authOkBuffer, expectedAuthenticationOkayMessage)
   testForMessage(plainPasswordBuffer, expectedPlainPasswordMessage)
   testForMessage(md5PasswordBuffer, expectedMD5PasswordMessage)
-  testForMessage(SASLBuffer, expectedSASLMessage)
-  testForMessage(SASLContinueBuffer, expectedSASLContinueMessage)
-
-  // this exercises a found bug in the parser:
-  // https://github.com/brianc/node-postgres/pull/2210#issuecomment-627626084
-  // and adds a test which is deterministic, rather than relying on network packet chunking
-  const extendedSASLContinueBuffer = Buffer.concat([SASLContinueBuffer, Buffer.from([1, 2, 3, 4])])
-  testForMessage(extendedSASLContinueBuffer, expectedSASLContinueMessage)
-
-  testForMessage(SASLFinalBuffer, expectedSASLFinalMessage)
-
-  // this exercises a found bug in the parser:
-  // https://github.com/brianc/node-postgres/pull/2210#issuecomment-627626084
-  // and adds a test which is deterministic, rather than relying on network packet chunking
-  const extendedSASLFinalBuffer = Buffer.concat([SASLFinalBuffer, Buffer.from([1, 2, 4, 5])])
-  testForMessage(extendedSASLFinalBuffer, expectedSASLFinalMessage)
-
   testForMessage(paramStatusBuffer, expectedParameterStatusMessage)
   testForMessage(backendKeyDataBuffer, expectedBackendKeyDataMessage)
   testForMessage(readyForQueryBuffer, expectedReadyForQueryMessage)
@@ -267,7 +251,7 @@ describe('PgPacketStream', function () {
   testForMessage(Buffer.from([0x6e, 0, 0, 0, 4]), {
     name: 'noData',
   })
-
+/*
   describe('rowDescription messages', function () {
     testForMessage(emptyRowDescriptionBuffer, expectedEmptyRowDescriptionMessage)
     testForMessage(oneRowDescBuff, expectedOneRowMessage)
@@ -279,7 +263,7 @@ describe('PgPacketStream', function () {
     testForMessage(oneParameterDescBuf, expectedOneParameterMessage)
     testForMessage(twoParameterDescBuf, expectedTwoParameterMessage)
   })
-
+*/
   describe('parsing rows', function () {
     describe('parsing empty row', function () {
       testForMessage(emptyRowFieldBuf, {

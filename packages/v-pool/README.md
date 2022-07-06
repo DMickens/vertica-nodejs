@@ -48,8 +48,11 @@ When you open an issue please provide:
 Outside contributions to this project are greatly appreciated. Following standard Vertica open source practices, please see [CONTRIBUTING.md](CONTRIBUTING.md)
 -->
 
+## Examples
 
-### Setting up for local development
+See the [examples directory](https://github.com/vertica/vertica-nodejs/tree/master/examples) for sample applications showing how to use the vertica-nodejs client driver.
+
+## Setting up for local development
 
 1. Clone the repo
 2. From your workspace root run `yarn` and then `yarn lerna bootstrap`
@@ -63,7 +66,8 @@ The causes and solutions to common errors can be found among the [Frequently Ask
 
 ## License
 
-<!-- Copyright (c) 2010-2020 Brian Carlson (brian.m.carlson@gmail.com) are we allowed to change this and if so do we have an open source email to use -->
+<!-- Original work Copyright (c) 2010-2020 Brian Carlson (brian.m.carlson@gmail.com) -->
+<!-- Modified work Copyright (c) 2022 Micro Focus or one of its affiliates.  -->
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,3 +1,21 @@
+/**
+ * @license
+ * Copyright (c) 2022 Micro Focus or one of its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 export type Mode = 'text' | 'binary'
 
 export type MessageName =
@@ -13,6 +31,7 @@ export type MessageName =
   | 'rowDescription'
   | 'parameterDescription'
   | 'parameterStatus'
+  | 'commandDescription'
   | 'backendKeyData'
   | 'notification'
   | 'readyForQuery'
@@ -22,10 +41,8 @@ export type MessageName =
   | 'copyOutResponse'
   | 'authenticationOk'
   | 'authenticationMD5Password'
+  | 'authenticationSHA512Password'
   | 'authenticationCleartextPassword'
-  | 'authenticationSASL'
-  | 'authenticationSASLContinue'
-  | 'authenticationSASLFinal'
   | 'error'
   | 'notice'
 
@@ -136,10 +153,16 @@ export class CopyResponse {
 export class Field {
   constructor(
     public readonly name: string,
-    public readonly tableID: number,
+    public readonly tableID: bigint,
+    public readonly schemaName: string,
+    public readonly tableName: string,
     public readonly columnID: number,
+    //public readonly parentTypeID: number, //breadcrumb for complex types
+    //public readonly isNonNative: number,  //breadcrumb for non native types
     public readonly dataTypeID: number,
     public readonly dataTypeSize: number,
+    public readonly allowsNull: number,
+    public readonly isIdentity: number,
     public readonly dataTypeModifier: number,
     public readonly format: Mode
   ) {}
@@ -147,17 +170,28 @@ export class Field {
 
 export class RowDescriptionMessage {
   public readonly name: MessageName = 'rowDescription'
+  //public readonly nonNativeTypes: number; //breadcrumb for non native types
   public readonly fields: Field[]
   constructor(public readonly length: number, public readonly fieldCount: number) {
     this.fields = new Array(this.fieldCount)
   }
 }
 
+export class Parameter {
+  constructor (
+    public readonly isNonNative: boolean,
+    public readonly oid: number, // for non native types, the oid becomes the index into the type mapping pool
+    public readonly typemod: number,
+    public readonly hasNotNullConstraint: number
+  ) {}
+}
+
 export class ParameterDescriptionMessage {
   public readonly name: MessageName = 'parameterDescription'
-  public readonly dataTypeIDs: number[]
+  //public readonly nonNativeTyeps: number //breadcrumb for non native types
+  public readonly parameters: Parameter[]
   constructor(public readonly length: number, public readonly parameterCount: number) {
-    this.dataTypeIDs = new Array(this.parameterCount)
+    this.parameters = new Array(this.parameterCount)
   }
 }
 
@@ -170,9 +204,20 @@ export class ParameterStatusMessage {
   ) {}
 }
 
+export class CommandDescriptionMessage {
+  public readonly name: MessageName = 'commandDescription'
+  constructor ( public readonly length: number, public readonly tag: string, 
+                public readonly convertedToCopy: number, public readonly convertedStatement: string) {}
+}
+
 export class AuthenticationMD5Password implements BackendMessage {
   public readonly name: MessageName = 'authenticationMD5Password'
   constructor(public readonly length: number, public readonly salt: Buffer) {}
+}
+
+export class AuthenticationSHA512Password implements BackendMessage {
+  public readonly name: MessageName = 'authenticationSHA512Password'
+  constructor(public readonly length: number, public readonly salt: Buffer, public readonly userSalt: Buffer) {}
 }
 
 export class BackendKeyDataMessage {
