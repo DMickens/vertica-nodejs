@@ -86,4 +86,11 @@ module.exports = {
 
   // A comma separated string listing all backup nodes to connect to. Each node is a host-port pair separated by a colon.
   backup_server_node: '',
+
+  // multiple active result sets not supported
+  // default is false, but also hard coded to be false in connection-parameters
+  mars: false,
+
+  // A string distinguish the OS login username of this client
+  client_os_user_name: '',
 }

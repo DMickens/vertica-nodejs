@@ -50,7 +50,9 @@ class Client extends EventEmitter {
 
     this.client_label = this.connectionParameters.client_label;
     this.protocol_version = this.connectionParameters.protocol_version;
-
+    this.client_os_user_name = this.connectionParameters.client_os_user_name
+    this.mars = this.connectionParameters.mars
+    
     var c = config || {}
 
     this._Promise = c.Promise || global.Promise
@@ -511,9 +513,14 @@ class Client extends EventEmitter {
     if (params.options) {
       data.options = params.options
     }
-
     if (params.client_label) {
       data.client_label = params.client_label
+    }
+    if (params.mars) {
+      data.mars = params.mars
+    }
+    if (params.client_os_user_name){
+      data.client_os_user_name = params.client_os_user_name
     }
 
     return data

@@ -1,5 +1,5 @@
 'use strict'
-var helper = require('./test-helper')
+var helper = require('../client/test-helper')
 var vertica = helper.vertica
 
 var suite = new helper.Suite()
@@ -53,7 +53,7 @@ const testBackupNode = function(addr) {
   const badAddress = 'oops'
   const client = new vertica.Client({host: badAddress, backup_server_node: addr})
   client.connect()
-  client.query("SELECt NOW()", (err, res) => {
+  client.query("SELECT NOW()", (err, res) => {
     assert(!err)
     client.end()
   })
@@ -64,4 +64,26 @@ suite.test('vertica backup_server_node connection parameter', function() {
   assert.equal(vertica.defaults.backup_server_node, '')
   const addresses = ['127.0.0.1', '127.0.0.1:5433', '0:0:0:0:0:0:0:1', '::1', '[0:0:0:0:0:0:0:1]:5433', '[0:0:0:0:0:0:0:1]', 'localhost', 'localhost:5433']
   addresses.forEach(testBackupNode)
+})
+
+suite.test('vertica client_os_user_name', function () {
+  // assert current default behavior
+  assert.equal(vertica.defaults.client_os_user_name, '')
+
+  const client = new vertica.Client({client_os_user_name: 'test_os_user_name'})
+  client.connect()
+  client.query("SELECT client_os_user_name FROM current_session", (err, res) => {
+    assert(!err)
+    assert.equal(res.rows[0].client_os_user_name, 'test_os_user_name')
+    client.end()
+  })
+})
+
+suite.test('vertica mars connection parameter', async function() {
+  // assert current default behavior
+  assert.equal(vertica.defaults.mars, false)
+
+  // assert that mars is false no matter what config you provide
+  const client = new vertica.Client({mars: true})
+  assert.equal(client.mars, false)
 })

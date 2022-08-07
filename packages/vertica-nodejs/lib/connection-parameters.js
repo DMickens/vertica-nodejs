@@ -110,7 +110,9 @@ class ConnectionParameters {
     this.backup_server_node = parseBackupServerNodes(val('backup_server_node', config))
     this.client_label = val('client_label', config, false)
     //NOTE: The client has only been tested to support 3.5, which was chosen in order to include SHA512 support
-    this.protocol_version = (3 << 16 | 5) // 3.5 -> (major << 16 | minor) -> (3 << 16 | 5) -> 196613
+    this.protocol_version = (3 << 16 | 7) // 3.5 -> (major << 16 | minor) -> (3 << 16 | 5) -> 196613
+    this.mars = false // not supported, hard coded as false
+    this.client_os_user_name = val('client_os_user_name', config, false)
 
     if (config.connectionTimeoutMillis === undefined) {
       this.connect_timeout = process.env.PGCONNECT_TIMEOUT || 0
@@ -127,37 +129,6 @@ class ConnectionParameters {
     if (typeof config.keepAliveInitialDelayMillis === 'number') {
       this.keepalives_idle = Math.floor(config.keepAliveInitialDelayMillis / 1000)
     }
-  }
-
-  getLibpqConnectionString(cb) {
-    var params = []
-    add(params, this, 'user')
-    add(params, this, 'password')
-    add(params, this, 'port')
-    add(params, this, 'connect_timeout')
-    add(params, this, 'options')
-    add(params, this, 'backup_server_node')
-
-    if (this.database) {
-      params.push('dbname=' + quoteParamValue(this.database))
-    }
-    if (this.replication) {
-      params.push('replication=' + quoteParamValue(this.replication))
-    }
-    if (this.host) {
-      params.push('host=' + quoteParamValue(this.host))
-    }
-    if (this.isDomainSocket) {
-      return cb(null, params.join(' '))
-    }
-    if (this.client_encoding) {
-      params.push('client_encoding=' + quoteParamValue(this.client_encoding))
-    }
-    dns.lookup(this.host, function (err, address) {
-      if (err) return cb(err, null)
-      params.push('hostaddr=' + quoteParamValue(address))
-      return cb(null, params.join(' '))
-    })
   }
 }
 
