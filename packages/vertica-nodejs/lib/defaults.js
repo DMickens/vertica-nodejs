@@ -91,6 +91,5 @@ module.exports = {
   // default is false, but also hard coded to be false in connection-parameters
   mars: false,
 
-  // A string distinguish the OS login username of this client
-  client_os_user_name: '',
+  protocol_version: (3 << 16 | 7),
 }

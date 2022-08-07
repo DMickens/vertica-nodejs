@@ -14,7 +14,7 @@
 
 'use strict'
 
-var dns = require('dns')
+const os = require('os')
 
 var defaults = require('./defaults')
 
@@ -110,9 +110,12 @@ class ConnectionParameters {
     this.backup_server_node = parseBackupServerNodes(val('backup_server_node', config))
     this.client_label = val('client_label', config, false)
     //NOTE: The client has only been tested to support 3.5, which was chosen in order to include SHA512 support
-    this.protocol_version = (3 << 16 | 7) // 3.5 -> (major << 16 | minor) -> (3 << 16 | 5) -> 196613
+    this.protocol_version = val('protocol_version', config, false) // 3.7 -> (major << 16 | minor) -> (3 << 16 | 7)
+    if (this.protocol_version > (3 << 16 | 7)) {
+      throw new Error("Attempting to use a protocol version unsupported by the driver")
+    }
     this.mars = false // not supported, hard coded as false
-    this.client_os_user_name = val('client_os_user_name', config, false)
+    this.client_os_user_name = os.userInfo().username
 
     if (config.connectionTimeoutMillis === undefined) {
       this.connect_timeout = process.env.PGCONNECT_TIMEOUT || 0

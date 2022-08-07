@@ -1,6 +1,7 @@
 'use strict'
 var helper = require('../client/test-helper')
 var vertica = helper.vertica
+const {username} = require('os').userInfo()
 
 var suite = new helper.Suite()
 
@@ -34,7 +35,7 @@ suite.test('vertica protocol_version connection parameter', function () {
   // protocol_version shouldn't be set by an environment variable, or a config,
   // so we will hardcode at definition instead of assignment later in a way 
   // that is different from all other connection properties
-  assert.equal(vertica.defaults.protocol_version, undefined)
+  assert.equal(vertica.defaults.protocol_version, (3 << 16 | 7))
 
   // assert that the driver uses the protocol_version connection parameter to cap
   // the protocol version used by the server
@@ -44,10 +45,13 @@ suite.test('vertica protocol_version connection parameter', function () {
       if (err) assert(false)
       var pv = res.rows[0]['effective_protocol'] // string of form "Major.minor"
       var int32pv = (parseInt(pv.split(".")[0]) << 16 | parseInt(pv.split(".")[1])) // int32 from (M << 16 | m)
+      console.log("Effective Protocol Version: " + pv)
       assert(int32pv <= client.protocol_version) // server isn't trying to talk in a protocol newer than we know
       client.end()
   })
 })
+
+
 
 const testBackupNode = function(addr) {
   const badAddress = 'oops'
@@ -67,14 +71,13 @@ suite.test('vertica backup_server_node connection parameter', function() {
 })
 
 suite.test('vertica client_os_user_name', function () {
-  // assert current default behavior
-  assert.equal(vertica.defaults.client_os_user_name, '')
+  // default behavior is hard coded based on username found with os module
 
   const client = new vertica.Client({client_os_user_name: 'test_os_user_name'})
   client.connect()
   client.query("SELECT client_os_user_name FROM current_session", (err, res) => {
     assert(!err)
-    assert.equal(res.rows[0].client_os_user_name, 'test_os_user_name')
+    assert.equal(res.rows[0].client_os_user_name, username)
     client.end()
   })
 })
