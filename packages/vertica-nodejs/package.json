@@ -1,6 +1,6 @@
 {
   "name": "vertica-nodejs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vertica client - pure javascript & libpq with the same API",
   "keywords": [
     "database",
@@ -28,16 +28,17 @@
   "dependencies": {
     "buffer-writer": "2.0.0",
     "packet-reader": "1.0.0",
-    "v-connection-string": "1.0.0",
-    "v-pool": "1.0.0",
-    "v-protocol": "1.0.0",
     "pg-types": "^2.1.0",
-    "pgpass": "1.x"
+    "pgpass": "1.x",
+    "v-connection-string": "1.0.1",
+    "v-pool": "1.0.1",
+    "v-protocol": "1.0.1"
   },
   "devDependencies": {
     "async": "0.9.0",
     "bluebird": "3.5.2",
     "co": "4.6.0",
+    "mocha": "^7.2.0",
     "pg-copy-streams": "0.3.0"
   },
   "scripts": {
@@ -49,6 +50,6 @@
   ],
   "license": "Apache-2.0",
   "engines": {
-    "node": ">= 14.0.0"
+    "node": ">= 12.0.0"
   }
 }
