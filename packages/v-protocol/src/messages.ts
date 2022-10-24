@@ -45,6 +45,8 @@ export type MessageName =
   | 'authenticationCleartextPassword'
   | 'error'
   | 'notice'
+  | 'loadbalanceresponsey'
+  | 'loadbalanceresponsen'
 
 export interface BackendMessage {
   name: MessageName
@@ -272,4 +274,10 @@ export class NoticeMessage implements BackendMessage, NoticeOrError {
   public file: string | undefined
   public line: string | undefined
   public routine: string | undefined
+}
+
+export class LoadBalanceResponseMessage {
+  public readonly name = 'loadBalance'
+  public 
+  constructor(public readonly length: number, public readonly port: number, public readonly host: string | undefined) {}
 }

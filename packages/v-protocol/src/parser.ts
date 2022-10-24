@@ -93,6 +93,8 @@ const enum MessageCodes {
   CopyOut = 0x48, // H
   CopyDone = 0x63, // c
   CopyData = 0x64, // d
+  LoadBalanceResponseY = 0x59,
+  LoadBalanceResponseN = 0x4e,
 }
 
 export type MessageCallback = (msg: BackendMessage) => void
