@@ -109,6 +109,7 @@ class ConnectionParameters {
 
     this.backup_server_node = parseBackupServerNodes(val('backup_server_node', config))
     this.client_label = val('client_label', config, false)
+    this.autocommit = val('autocommit', config, true)
     //NOTE: The client has only been tested to support 3.5, which was chosen in order to include SHA512 support
     this.protocol_version = (3 << 16 | 5) // 3.5 -> (major << 16 | minor) -> (3 << 16 | 5) -> 196613
 

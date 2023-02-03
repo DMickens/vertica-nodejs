@@ -328,6 +328,10 @@ class Client extends EventEmitter {
         }
         this.connectionParameters.protocol_version = parseInt(msg.ParameterValue) // likely to be the same, meaning this has no affect
         break;
+      case 'autocommit':
+        console.log("autocommit param status")
+        this.connectionParameters.autocommit = msg.ParameterValue
+        break;
       default:
         // do nothing
     }
@@ -507,11 +511,13 @@ class Client extends EventEmitter {
     if (params.options) {
       data.options = params.options
     }
-
+    if (params.autocommit) {
+      data.autocommit = params.autocommit
+    }
     if (params.client_label) {
       data.client_label = params.client_label
     }
-
+    data.auth_category = 'OAuth';
     return data
   }
 

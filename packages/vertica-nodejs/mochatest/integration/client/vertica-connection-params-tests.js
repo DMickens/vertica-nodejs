@@ -15,6 +15,7 @@
 'use strict'
 const vertica = require('../../../lib')
 const assert = require('assert')
+const { Console } = require('console')
 
 describe('vertica label connection parameter', function () {
   it('has a default value that is used when left unspecified', function(done) {
@@ -98,6 +99,41 @@ describe('vertica backup_server_node connection parameter', function() {
       addresses.forEach(testBackupNode)
     }).catch(() => {
       console.log("Skipping test ")
+    })
+    done()
+  })
+})
+
+describe('vertica autocommit connection parameter', function() {
+  it('has a default value that is used when left unspecified', function() {
+    assert.equal(vertica.defaults.autocommit, undefined)
+  })
+
+  it('can correctly set autocommit on the server', function(done) {
+    const client = new vertica.Client({autocommit: "on"})
+    client.connect()
+    client.query("SHOW AUTOCOMMIT", (err, res) => {
+      if (err) {
+        assert(false)
+      }
+      var autocommit = res.rows[0]['setting']; // return value has keys 'name' and 'setting'
+      assert.equal(autocommit, "on");
+      client.end()
+      done()
+    })
+  })
+
+  it('is updated by a set session autocommit query', function(done) {
+    const client = new vertica.Client({autocommit: "on"}) // default
+    client.connect()
+    assert.equal(client.connectionParameters.autocommit, "on");
+    client.query("SET SESSION AUTOCOMMIT TO OFF", (err, res) => {
+      if (err) {
+        assert(false)
+      }
+      assert.equal(client.connectionParameters.autocommit, "off");
+      console.log("client.connectionParameters.autocommit" + client.connectionParameters.autocommit)
+      client.end()
     })
     done()
   })
