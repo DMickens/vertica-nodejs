@@ -20,6 +20,7 @@ import { BackendMessage, DatabaseError } from './backend-messages'
 import { serialize } from './serializer'
 import { VerticaType } from './vertica-types'
 import { Parser, MessageCallback } from './parser'
+import { BufferReader } from './buffer-reader'
 
 export function parse(stream: NodeJS.ReadableStream, callback: MessageCallback): Promise<void> {
   const parser = new Parser()
@@ -27,4 +28,4 @@ export function parse(stream: NodeJS.ReadableStream, callback: MessageCallback):
   return new Promise((resolve) => stream.on('end', () => resolve()))
 }
 
-export { serialize, DatabaseError, VerticaType }
+export { serialize, DatabaseError, VerticaType, BufferReader }

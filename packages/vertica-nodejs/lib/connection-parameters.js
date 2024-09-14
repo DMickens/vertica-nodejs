@@ -126,6 +126,7 @@ class ConnectionParameters {
     this.backup_server_node = parseBackupServerNodes(val('backup_server_node', config))
     this.client_label = val('client_label', config, false)
     this.workload = val('workload', config, false)
+    this.enable_load_balancing = val('enable_load_balancing', config, false)
 
     // client auditing information
     this.client_type = "Node.js Driver"

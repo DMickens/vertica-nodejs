@@ -18,7 +18,7 @@ var net = require('net')
 var fs = require('fs')
 var EventEmitter = require('events').EventEmitter
 
-const { parse, serialize } = require('v-protocol')
+const { parse, serialize, BufferReader } = require('v-protocol')
 
 const flushBuffer = serialize.flush()
 const syncBuffer = serialize.sync()
@@ -41,6 +41,8 @@ class Connection extends EventEmitter {
     this.statementCounterBuffer = new SharedArrayBuffer(32)
     this.statementCounter = new Int32Array(this.statementCounterBuffer)
     this.statementCounter[0] = 0
+
+    this.enable_load_balancing = config.enable_load_balancing || false
 
     // encryption
     this.tls_config = config.tls_config
@@ -68,6 +70,9 @@ class Connection extends EventEmitter {
     this.stream.connect(port, host)
 
     this.stream.once('connect', function () {
+      if (self.enable_load_balancing) {
+        self.doLoadBalancing()
+      }
       if (self._keepAlive) {
         self.stream.setKeepAlive(true, self._keepAliveInitialDelayMillis)
       }
@@ -192,6 +197,34 @@ class Connection extends EventEmitter {
       self.emit('sslconnect')
     })
   } 
+  
+  doLoadBalancing() {
+
+    this.stream.write(serialize.requestLoadBalancing())
+
+    this.stream.once('data', function (buffer) {  
+      const reader = new BufferReader()
+      reader.setBuffer(0, buffer)
+      let responseCode = reader.string(1)
+      switch (responseCode) {
+        case 'Y': // server supports load balancing
+          reader.int32() // length
+          let newPort = reader.int32()
+          let newHost = reader.cstring()
+          this.stream = new net.Socket()
+          this.stream.setNoDelay(true)
+          this.stream.connect(newPort, newHost)
+          console.log("Load Balance redirection complete")
+          return
+        case 'N': // Server does not support load balancing, just continue as normal
+          return
+        default:
+          // Any other response byte, including 'E' (ErrorResponse) indicating a server error
+          this.stream.end()
+          return this.emit('error', new Error('There was an error during load balancing'))
+      }
+    })
+  }
 
   attachListeners(stream) {
     stream.on('end', () => {

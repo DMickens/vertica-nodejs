@@ -299,6 +299,13 @@ const verifiedFiles = (config: genericConfig): Buffer => {
   return writer.flush(code.verifiedFiles)
 }
 
+const requestLoadBalancing = (): Buffer => {
+  const request = Buffer.allocUnsafe(8)
+  request.writeInt32BE(8, 0)
+  request.writeInt32BE(80936960, 4)
+  return request
+}
+
 const codeOnlyBuffer = (code: code): Buffer => Buffer.from([code, 0x00, 0x00, 0x00, 0x04])
 
 const flushBuffer = codeOnlyBuffer(code.flush)
@@ -327,6 +334,7 @@ const serialize = {
   EndOfBatchRequest: () => endOfBatchRequestBuffer,
   cancel,
   verifiedFiles,
+  requestLoadBalancing,
 }
 
 export { serialize }
