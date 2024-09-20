@@ -62,43 +62,34 @@ class Connection extends EventEmitter {
     })
   }
 
-  connect(port, host) {
+  // prep the stream for handling connection event
+  prepareStream() {
     var self = this
 
-    this._connecting = true
-    this.stream.setNoDelay(true)
-    this.stream.connect(port, host)
-
-    this.stream.once('connect', function () {
-      if (self.enable_load_balancing) {
-        self.doLoadBalancing()
-      }
+    this.stream.once('connect', function() {
       if (self._keepAlive) {
         self.stream.setKeepAlive(true, self._keepAliveInitialDelayMillis)
       }
       self.emit('connect')
     })
 
-    const reportStreamError = function (error) {
+    this.stream.on('error', function() {
       // errors about disconnections should be ignored during disconnect
       if (self._ending && (error.code === 'ECONNRESET' || error.code === 'EPIPE')) {
         return
       }
       self.emit('error', error)
-    }
-    this.stream.on('error', reportStreamError)
+    })
 
     this.stream.on('close', function () {
       self.emit('end')
     })
 
+    this.attachListeners()
+  }
 
-
-    // only try to connect with tls if we are set up to handle it
-    if (self.tls_config === undefined && self.tls_mode === 'disable') {
-      return this.attachListeners(this.stream)
-    }
-
+  prepareStreamForTLS() {
+    var self = this
     this.stream.once('data', function (buffer) {
       var responseCode = buffer.toString('utf8')
       switch (responseCode) {
@@ -192,16 +183,26 @@ class Connection extends EventEmitter {
         }
         
       }
-      self.attachListeners(self.stream)
+      self.attachListeners()
       self.stream.on('error', reportStreamError)
       self.emit('sslconnect')
     })
+  }
+
+  connect(port, host) {
+    this._connecting = true
+    this.stream.setNoDelay(true)
+    this.stream.connect(port, host)
+    this.prepareStream()
+    // only try to connect with tls if we are set up to handle it
+    if (!(this.tls_config === undefined || this.tls_mode === 'disable')) {
+      this.prepareStreamForTLS()
+    }
   } 
   
   doLoadBalancing() {
-
+    var self = this
     this.stream.write(serialize.requestLoadBalancing())
-
     this.stream.once('data', function (buffer) {  
       const reader = new BufferReader()
       reader.setBuffer(0, buffer)
@@ -211,16 +212,23 @@ class Connection extends EventEmitter {
           reader.int32() // length
           let newPort = reader.int32()
           let newHost = reader.cstring()
-          this.stream = new net.Socket()
-          this.stream.setNoDelay(true)
-          this.stream.connect(newPort, newHost)
-          console.log("Load Balance redirection complete")
+          self.stream.destroy()
+          self.stream = new net.Socket()
+          self.stream.setNoDelay(true)
+          self.stream.connect(newPort, newHost)
+          self.prepareStream()
+          // only try to connect with tls if we are set up to handle it
+          if (!(self.tls_config === undefined || self.tls_mode === 'disable')) {
+            self.prepareStreamForTLS()
+          }
+          self.emit('loadbalanceconnect')
           return
         case 'N': // Server does not support load balancing, just continue as normal
+          self.emit('loadbalanceconnect')
           return
         default:
           // Any other response byte, including 'E' (ErrorResponse) indicating a server error
-          this.stream.end()
+          self.stream.end()
           return this.emit('error', new Error('There was an error during load balancing'))
       }
     })

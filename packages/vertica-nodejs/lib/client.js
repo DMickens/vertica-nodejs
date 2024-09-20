@@ -196,7 +196,20 @@ class Client extends EventEmitter {
 
     // once connection is established send startup message
     con.on('connect', function () {
-      // SSLRequest Message
+      const initStream = con.stream
+      if (con.enable_load_balancing) {
+        con.doLoadBalancing()
+      } else {
+        // SSLRequest Message
+        if (self.tls_mode !== 'disable' || self.tls_config !== undefined) {
+          con.requestSsl()
+        } else {
+          con.startup(self.getStartupConf())
+        }
+      }
+    })
+
+    con.on('loadbalanceconnect', function() {
       if (self.tls_mode !== 'disable' || self.tls_config !== undefined) {
         con.requestSsl()
       } else {
@@ -263,9 +276,7 @@ class Client extends EventEmitter {
   }
 
   _attachListeners(con) {
-    // password request handling
     con.on('authenticationCleartextPassword', this._handleAuthCleartextPassword.bind(this))
-    // password request handling
     con.on('authenticationMD5Password', this._handleAuthMD5Password.bind(this))
     con.on('authenticationSHA512Password', this._handleAuthSHA512Password.bind(this))
     con.on('authenticationOAuthPassword', this._handleOAuthPassword.bind(this))
